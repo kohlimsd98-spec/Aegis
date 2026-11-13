@@ -1,334 +1,223 @@
-
 package com.aegis.security
 
 import android.app.Activity
-import android.app.AlertDialog
-import android.content.Intent
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
+import android.view.View
 import android.widget.*
-import java.security.MessageDigest
-import java.security.SecureRandom
 
 class MainActivity : Activity() {
 
-    private lateinit var layout: LinearLayout
-    private val random = SecureRandom()
+    private var hindi = false
+    private lateinit var root: LinearLayout
+
+    private val bg = Color.rgb(9, 16, 32)
+    private val panel = Color.rgb(19, 31, 53)
+    private val blue = Color.rgb(45, 137, 255)
+    private val white = Color.WHITE
+    private val muted = Color.rgb(165, 180, 205)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        showDashboard()
+        window.statusBarColor = bg
+        window.navigationBarColor = bg
+        render()
     }
 
-    private fun showDashboard() {
-        layout = LinearLayout(this).apply {
+    private fun render() {
+        root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(28, 35, 28, 30)
-            setBackgroundColor(0xFF101820.toInt())
+            setPadding(20, 18, 20, 20)
+            setBackgroundColor(bg)
         }
 
         val scroll = ScrollView(this)
-        scroll.addView(layout)
-
-        val title = TextView(this).apply {
-            text = "AEGIS"
-            textSize = 32f
-            setTextColor(0xFF00E5FF.toInt())
-            gravity = Gravity.CENTER
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-        }
-        layout.addView(title)
-
-        addText("MOBILE SECURITY CENTER", 15f, 0xFFFFFFFF.toInt())
-        addText("Your device security dashboard", 13f, 0xFFB0BEC5.toInt())
-
-        addButton("SCAN FILE") { chooseFile() }
-        addButton("CHECK PHISHING URL") { checkUrl() }
-        addButton("PASSWORD STRENGTH CHECKER") { passwordChecker() }
-        addButton("GENERATE STRONG PASSWORD") { generatePassword() }
-        addButton("NETWORK SECURITY INFO") { networkInfo() }
-        addButton("PRIVACY CHECKLIST") { privacyChecklist() }
-        addButton("ANDROID SECURITY UPDATE") { openSettings(Settings.ACTION_SECURITY_SETTINGS) }
-        addButton("APP PERMISSIONS") { openSettings(Settings.ACTION_APPLICATION_SETTINGS) }
-
-        addText(
-            "Note: Aegis performs basic local checks. It is not a full antivirus and cannot guarantee detection of malware.",
-            12f,
-            0xFFFFD180.toInt()
-        )
-
+        scroll.addView(root)
         setContentView(scroll)
+
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+
+        val brand = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+
+        brand.addView(label("AEGIS", 27, white, true))
+        brand.addView(label("MOBILE SECURITY", 11, muted, true))
+
+        header.addView(brand, LinearLayout.LayoutParams(0, -2, 1f))
+
+        val lang = Button(this).apply {
+            text = if (hindi) "हिंदी" else "EN / HI"
+            textSize = 12f
+            setTextColor(white)
+            background = shape(blue, 18)
+            setOnClickListener {
+                hindi = !hindi
+                render()
+            }
+        }
+        header.addView(lang)
+        root.addView(header)
+
+        space(24)
+        root.addView(label(
+            if (hindi) "आपका सुरक्षा केंद्र" else "Your Security Center",
+            23, white, true
+        ))
+        root.addView(label(
+            if (hindi) "आपके डिवाइस की सुरक्षा का अवलोकन" else
+                "Your device protection overview",
+            13, muted
+        ))
+
+        space(20)
+        val score = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(20, 24, 20, 24)
+            background = shape(panel, 22)
+        }
+
+        score.addView(label("🛡️", 36, white))
+        score.addView(label(
+            if (hindi) "डिवाइस सुरक्षा स्थिति" else "DEVICE SECURITY STATUS",
+            13, muted, true
+        ))
+        score.addView(label(
+            if (hindi) "जांच की प्रतीक्षा में" else "Awaiting security check",
+            21, white, true
+        ))
+        score.addView(label(
+            if (hindi) "अभी पूर्ण सुरक्षा स्कैन नहीं हुआ है" else
+                "A full security scan has not been performed",
+            12, muted
+        ))
+        root.addView(score, matchWidth())
+
+        space(22)
+        root.addView(label(
+            if (hindi) "त्वरित सुरक्षा उपकरण" else "QUICK SECURITY TOOLS",
+            14, muted, true
+        ))
+        space(10)
+
+        val tools = listOf(
+            arrayOf("🔍", "Quick Scan", "त्वरित स्कैन"),
+            arrayOf("📁", "File Scanner", "फाइल स्कैनर"),
+            arrayOf("🌐", "Web Protection", "वेब सुरक्षा"),
+            arrayOf("🔐", "Privacy Guard", "प्राइवेसी सुरक्षा"),
+            arrayOf("📶", "Network Security", "नेटवर्क सुरक्षा"),
+            arrayOf("📋", "Scan Reports", "स्कैन रिपोर्ट")
+        )
+
+        for (i in tools.indices step 2) {
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+            }
+            row.addView(toolCard(tools[i]), LinearLayout.LayoutParams(0, 135, 1f))
+            val second = if (i + 1 < tools.size) tools[i + 1] else tools[i]
+            row.addView(toolCard(second), LinearLayout.LayoutParams(0, 135, 1f))
+            root.addView(row)
+            space(10)
+        }
+
+        space(12)
+        root.addView(label(
+            if (hindi) "सुरक्षा जानकारी" else "SECURITY INFORMATION",
+            14, muted, true
+        ))
+        space(8)
+
+        val info = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16, 16, 16, 16)
+            background = shape(panel, 18)
+        }
+
+        info.addView(label(
+            if (hindi) "यह Aegis का प्रारंभिक डैशबोर्ड है।" else
+                "This is the initial Aegis dashboard.",
+            14, white, true
+        ))
+        info.addView(label(
+            if (hindi)
+                "स्कैनिंग और सुरक्षा मॉड्यूल अगले चरणों में जोड़े जाएंगे। अभी यह स्क्रीन वास्तविक मैलवेयर सुरक्षा प्रदान नहीं करती।"
+            else
+                "Scanning and protection modules will be added in upcoming phases. This screen does not yet provide real malware protection.",
+            12, muted
+        ))
+        root.addView(info, matchWidth())
+
+        space(20)
+        root.addView(label(
+            "AEGIS MOBILE SECURITY  •  VERSION 2.0",
+            10, muted, true
+        ))
     }
 
-    private fun addText(value: String, size: Float, color: Int) {
-        val text = TextView(this).apply {
+    private fun toolCard(item: Array<String>): LinearLayout {
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(8, 12, 8, 12)
+            background = shape(panel, 18)
+            isClickable = true
+            isFocusable = true
+            setOnClickListener {
+                Toast.makeText(
+                    this@MainActivity,
+                    if (hindi) "यह मॉड्यूल अगले चरण में सक्रिय होगा"
+                    else "This module will be activated in a future phase",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
+        card.addView(label(item[0], 27, white))
+        card.addView(label(
+            if (hindi) item[2] else item[1],
+            14, white, true
+        ))
+        card.addView(label(
+            if (hindi) "जल्द आ रहा है" else "Coming soon",
+            10, muted
+        ))
+        return card
+    }
+
+    private fun label(
+        value: String,
+        size: Int,
+        color: Int,
+        bold: Boolean = false
+    ): TextView {
+        return TextView(this).apply {
             text = value
-            textSize = size
+            textSize = size.toFloat()
             setTextColor(color)
-            setPadding(5, 14, 5, 14)
-        }
-        layout.addView(text)
-    }
-
-    private fun addButton(label: String, action: () -> Unit) {
-        val button = Button(this).apply {
-            text = label
-            setTextColor(0xFFFFFFFF.toInt())
-            setBackgroundColor(0xFF007C91.toInt())
-            textSize = 14f
-            setOnClickListener { action() }
-        }
-
-        val params = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        params.setMargins(0, 9, 0, 9)
-        layout.addView(button, params)
-    }
-
-    private fun chooseFile() {
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            type = "*/*"
-            addCategory(Intent.CATEGORY_OPENABLE)
-        }
-        startActivityForResult(intent, 101)
-    }
-
-    @Deprecated("Legacy file picker callback")
-    override fun onActivityResult(
-        requestCode: Int,
-        resultCode: Int,
-        data: Intent?
-    ) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == 101 && resultCode == RESULT_OK) {
-            val uri = data?.data ?: return
-            scanFile(uri)
+            gravity = Gravity.CENTER
+            if (bold) setTypeface(null, Typeface.BOLD)
+            setPadding(2, 3, 2, 3)
         }
     }
 
-    private fun scanFile(uri: Uri) {
-        try {
-            val input = contentResolver.openInputStream(uri)
-                ?: throw Exception("File open nahi ho payi")
-
-            val digest = MessageDigest.getInstance("SHA-256")
-            val buffer = ByteArray(8192)
-            var total = 0L
-
-            input.use { stream ->
-                while (true) {
-                    val count = stream.read(buffer)
-                    if (count == -1) break
-
-                    total += count
-                    if (total > 100L * 1024 * 1024) {
-                        throw Exception("File 100 MB se badi hai")
-                    }
-
-                    digest.update(buffer, 0, count)
-                }
-            }
-
-            val hash = digest.digest().joinToString("") {
-                "%02x".format(it)
-            }
-
-            val name = uri.lastPathSegment ?: "Selected file"
-
-            AlertDialog.Builder(this)
-                .setTitle("File Scan Report")
-                .setMessage(
-                    "File: $name\n\n" +
-                    "Size: $total bytes\n\n" +
-                    "SHA-256:\n$hash\n\n" +
-                    "Basic scan complete. Hash alone does not prove a file is safe."
-                )
-                .setPositiveButton("OK", null)
-                .show()
-
-        } catch (e: Exception) {
-            showMessage("Scan error: ${e.message}")
+    private fun shape(color: Int, radius: Int): GradientDrawable {
+        return GradientDrawable().apply {
+            setColor(color)
+            cornerRadius = radius * resources.displayMetrics.density
         }
     }
 
-    private fun checkUrl() {
-        val input = EditText(this).apply {
-            hint = "https://example.com"
-        }
+    private fun matchWidth() =
+        LinearLayout.LayoutParams(-1, -2)
 
-        AlertDialog.Builder(this)
-            .setTitle("Phishing URL Checker")
-            .setMessage("URL enter karein:")
-            .setView(input)
-            .setPositiveButton("CHECK") { _, _ ->
-                val url = input.text.toString().trim()
-                val result = inspectUrl(url)
-                showMessage(result)
-            }
-            .setNegativeButton("CANCEL", null)
-            .show()
-    }
-
-    private fun inspectUrl(url: String): String {
-        if (url.isBlank()) return "URL enter nahi kiya."
-
-        val lower = url.lowercase()
-
-        val suspicious = listOf(
-            "login-verify",
-            "account-suspended",
-            "free-gift",
-            "password-reset",
-            "verify-account",
-            "secure-update"
-        )
-
-        val warnings = mutableListOf<String>()
-
-        if (!lower.startsWith("https://")) {
-            warnings.add("HTTPS nahi hai")
-        }
-
-        if ("@" in url) {
-            warnings.add("URL mein @ symbol hai")
-        }
-
-        if (lower.contains("xn--")) {
-            warnings.add("Punycode domain mila")
-        }
-
-        if (suspicious.any { lower.contains(it) }) {
-            warnings.add("Suspicious keyword mila")
-        }
-
-        return if (warnings.isEmpty()) {
-            "Koi basic warning nahi mili.\n\nIska matlab URL safe hone ki guarantee nahi hai."
-        } else {
-            "WARNING: Suspicious URL ho sakta hai!\n\n" +
-            warnings.joinToString("\n") +
-            "\n\nLink open na karein jab tak verify na ho."
-        }
-    }
-
-    private fun passwordChecker() {
-        val input = EditText(this).apply {
-            hint = "Password enter karein"
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("Password Strength")
-            .setView(input)
-            .setPositiveButton("CHECK") { _, _ ->
-                val p = input.text.toString()
-                var score = 0
-
-                if (p.length >= 12) score++
-                if (p.any { it.isUpperCase() }) score++
-                if (p.any { it.isLowerCase() }) score++
-                if (p.any { it.isDigit() }) score++
-                if (p.any { !it.isLetterOrDigit() }) score++
-
-                val result = when {
-                    p.length < 8 -> "Weak"
-                    score <= 2 -> "Weak"
-                    score <= 3 -> "Medium"
-                    else -> "Strong"
-                }
-
-                showMessage("Password rating: $result\n\n" +
-                    "Ye basic estimate hai, guarantee nahi.")
-            }
-            .setNegativeButton("CANCEL", null)
-            .show()
-    }
-
-    private fun generatePassword() {
-        val chars =
-            "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#\$%&*"
-
-        val password = (1..20).map {
-            chars[random.nextInt(chars.length)]
-        }.joinToString("")
-
-        val box = EditText(this).apply {
-            setText(password)
-            isFocusable = false
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("Strong Password")
-            .setMessage("Apna password copy karke secure jagah rakhein.")
-            .setView(box)
-            .setPositiveButton("DONE", null)
-            .show()
-    }
-
-    private fun networkInfo() {
-        try {
-            val manager =
-                getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-
-            val network = manager.activeNetwork
-            val capabilities = manager.getNetworkCapabilities(network)
-
-            val type = when {
-                capabilities == null -> "No active network"
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "Wi-Fi"
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "Mobile data"
-                else -> "Other network"
-            }
-
-            val vpn = capabilities?.hasTransport(
-                NetworkCapabilities.TRANSPORT_VPN
-            ) == true
-
-            showMessage(
-                "Network: $type\nVPN detected: $vpn\n\n" +
-                "VPN detection does not verify network safety."
-            )
-        } catch (e: Exception) {
-            showMessage("Network information unavailable.")
-        }
-    }
-
-    private fun privacyChecklist() {
-        val items = arrayOf(
-            "Screen lock enabled",
-            "Unknown app installation disabled",
-            "App permissions reviewed",
-            "Android updated",
-            "Google Play Protect enabled"
-        )
-
-        AlertDialog.Builder(this)
-            .setTitle("Privacy Checklist")
-            .setMultiChoiceItems(items, BooleanArray(items.size)) {
-                _, _, _ -> 
-            }
-            .setPositiveButton("DONE", null)
-            .show()
-    }
-
-    private fun openSettings(action: String) {
-        try {
-            startActivity(Intent(action))
-        } catch (e: Exception) {
-            startActivity(Intent(Settings.ACTION_SETTINGS))
-        }
-    }
-
-    private fun showMessage(message: String) {
-        AlertDialog.Builder(this)
-            .setTitle("Aegis Security")
-            .setMessage(message)
-            .setPositiveButton("OK", null)
-            .show()
+    private fun space(height: Int) {
+        root.addView(View(this), LinearLayout.LayoutParams(1, height))
     }
 }
